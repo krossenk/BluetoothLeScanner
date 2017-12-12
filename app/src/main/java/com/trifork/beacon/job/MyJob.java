@@ -5,18 +5,24 @@ import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
+import android.os.ParcelUuid;
 import android.util.Log;
 
 import com.trifork.beacon.receiver.BluetoothLEBroadcastReceiver;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by KRK on 12/12/2017.
  */
 
 public class MyJob extends JobService {
+    private static final String UUID = "ab4ee505-2afc-47f5-b5a6-448a034023ec";
     private static final String TAG = "KRK";
     boolean jobCancelled = false;
     boolean needsReschedule = true;
@@ -61,9 +67,8 @@ public class MyJob extends JobService {
     }
 
     private void registerBLEReceiver() {
-        Log.d(TAG, "Registered BLEReceiver once again.");
         ScanSettings settings = (new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)).build();
-        //List<ScanFilter> filters = getScanFilters(); // Make a scan filter matching the beacons I care about
+        List<ScanFilter> filters = getScanFilters(); // Make a scan filter matching the beacons I care about
         BluetoothManager bluetoothManager =
                 (BluetoothManager) this.getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
@@ -71,5 +76,13 @@ public class MyJob extends JobService {
         intent.putExtra("o-scan", true);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         bluetoothAdapter.getBluetoothLeScanner().startScan(null, settings, pendingIntent);
+        Log.d(TAG, "Registered BLEReceiver.");
+    }
+
+    private List<ScanFilter> getScanFilters() {
+        ArrayList<ScanFilter> filters = new ArrayList<>();
+        ScanFilter scanFilter = new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(UUID)).build();
+        filters.add(scanFilter);
+        return filters;
     }
 }
